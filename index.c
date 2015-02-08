@@ -4,8 +4,9 @@
 #include <glib.h>
 #include <string.h>
 
-GSList* list = NULL;
+GSList *list = NULL;
 GHashTable *hash;
+FILE *ofile;
 
 void looklist(char* word);
 void printindex(GSList *index);
@@ -21,11 +22,13 @@ int main (int c, char *v[]) {
 		printf ("Usage: testprog <dirname>\n");
 		return 1;
 	}
+	
 	pDir = opendir (v[1]);
 	if (pDir == NULL) {
 		printf ("Cannot open directory '%s'\n", v[1]);
 		return 1;
 	}
+	
 	GSList* indexlist = NULL;
 	while ((pDirent = readdir(pDir)) != NULL) {
         //---Open file ---//
@@ -85,7 +88,13 @@ int main (int c, char *v[]) {
 		fclose(ifile);
 	}
 	closedir (pDir);
+	char opath[24];
+	sscanf(v[1],"%[A-Za-z]",opath);
+	sprintf(opath,"%s/output",opath);
+	ofile=fopen(opath,"w");
+	fprintf(ofile, "%d\n",g_slist_length(list));
 	g_slist_foreach(list,(GFunc)looklist,NULL);
+	fclose(ofile);
 	return 0;
 
 }
@@ -95,18 +104,25 @@ void looklist(char* word){
 	GSList *indexlist=g_hash_table_lookup(hash,word);
 	indexlist = g_slist_sort(indexlist,(GCompareFunc)compare_int);
 ///	printf("%d\n",*arraylist);
-	printf("%s:%d:",word,g_slist_length(indexlist));
-	do{
-		int *arraylist=indexlist->data;
-		printf("%d,",*arraylist);
+	int *arraylist=indexlist->data;
+	fprintf(ofile,"%s:%d:%d",word,g_slist_length(indexlist),*arraylist);
+
+	//	arraylist=indexlist->data;
+	//	fprintf(ofile,"%d",*arraylist);
+		//printf("%d,",indexlist->data);
+		indexlist=indexlist->next;
+//	indexlist=indexlist->next;
+	while( indexlist!=NULL){
+		arraylist=indexlist->data;
+		fprintf(ofile,",%d",*arraylist);
 		//printf("%d,",indexlist->data);
 		indexlist=indexlist->next;
 /*		if(indexlist!=NULL){
 			arraylist=indexlist->data;
 			printf("%d\n",*arraylist);
 		}*/
-	}while( indexlist!=NULL);
-	printf("\b\n");
+	}
+	fprintf(ofile,"\n");
 //	g_slist_foreach(indexlist,(GFunc)printf,NULL);
 }
 int compare_int (int *a, int *b)
