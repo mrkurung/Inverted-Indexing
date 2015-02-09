@@ -42,10 +42,10 @@ int main (int c, char *v[]) {
 
 		while(1){
 
-			char * word = g_malloc(sizeof(char)*64);
+			char * word = g_malloc(1024);
 			c = fscanf(ifile,"%[^A-Za-z]",word);
 			c = fscanf(ifile,"%[A-Za-z]",word);
-			word = realloc(word,sizeof(char)*(strlen(word)+1));
+			word = realloc(word,strlen(word)+1);
 			if(c == EOF)break;
 
 			int j;
