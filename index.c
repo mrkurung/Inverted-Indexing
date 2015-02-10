@@ -6,11 +6,14 @@
 
 GSList *list = NULL;
 GHashTable *hash;
-FILE *ofile;
-
+FILE *ifile,*ofile;
+//char buffer[];
+char f_path[24] ;
 void looklist(char* word);
+void addkey(char* word,int* index);
 void printindex(GSList *index);
 int compare_int (int *a, int *b);
+char* getword();
 
 int main (int c, char *v[]) {
 	int len;
@@ -32,53 +35,38 @@ int main (int c, char *v[]) {
 	GSList* indexlist = NULL;
 	while ((pDirent = readdir(pDir)) != NULL) {
 
-		char f_path[24] ;
+
 		int*index=g_malloc(sizeof(int));
 		sprintf(f_path,"%s/%s",v[1],pDirent->d_name);
-		FILE* ifile = fopen(f_path,"r");
+		ifile = fopen(f_path,"r");
 		sscanf(f_path,"%*[^0123456789]%d",index);
-		printf("%d\n",*index );
+//		printf("file%d\n",*index );
 
 
 		while(1){
-
-			char * word = g_malloc(sizeof(char)*64);
-			c = fscanf(ifile,"%[^A-Za-z]",word);
+//get word
+			/*
+			char * word = g_malloc(sizeof(char)*512);
+			c = fscanf(ifile,"%*[^A-Za-z]");
 			c = fscanf(ifile,"%[A-Za-z]",word);
 			word = realloc(word,sizeof(char)*(strlen(word)+1));
-			if(c == EOF)break;
-
-			int j;
-			for( j= 0; word[j]; j++){
-  				word[j] = tolower(word[j]);
-			}
 			
-			if(!g_slist_find_custom (list,word,(GCompareFunc)g_strcmp0)){
-				
-				list = g_slist_insert_sorted(list,word,(GCompareFunc)g_strcmp0);
+//---------*/
 
-				GSList* indexlist = NULL;
-				indexlist = g_slist_append(indexlist,index);
-				g_hash_table_insert (hash,word,indexlist);
-				
-			}else{
+			char *word = getword();
+			if(word==NULL)break;
 
-				GSList* indexlist=g_hash_table_lookup(hash,word);
-
-				int *value=(g_slist_last(indexlist))->data;
-				if(*value!=*index){
-				indexlist= g_slist_append(indexlist,index);
-
-				}
-			}
-    	}
+//			addkey(word,index);
+//			printf("%s\n",word );
+		}
 
 		fclose(ifile);
 	}
 
 	closedir (pDir);
 	ofile=fopen("output","w");
-	fprintf(ofile, "%d\n",g_slist_length(list));
+	list=g_slist_sort(list,(GCompareFunc)strcmp);
+//	fprintf(ofile, "%d\n",g_slist_length(list));
 	g_slist_foreach(list,(GFunc)looklist,NULL);
 	fclose(ofile);
 	return 0;
@@ -99,9 +87,72 @@ void looklist(char* word){
 
 	}
 	fprintf(ofile,"\n");
+	//fprintf(ofile,"%s\n",word );
 }
 
 int compare_int (int *a, int *b){
 	return (*a-*b);
   
 }
+ char* getword(){
+/*
+ 	char c;
+ 	GString* g_word= g_string_new(NULL);
+ 	c=fgetc(ifile);
+
+
+
+	while((!isalpha(c))){
+	 	if(c==-1)return NULL;
+	 	c=fgetc(ifile);
+	}
+
+ 	while(isalpha(c)){
+ 		g_string_append_c(g_word,tolower(c));
+ 		 c=fgetc(ifile);
+	}
+
+  	return g_word->str;
+*/	
+  	
+  	 /*			GString* g_word = g_string_new(NULL);
+
+  			char c, word[100];
+			c = fscanf(ifile,"%*[^A-Za-z]");
+			c = fscanf(ifile,"%[A-Za-z]",word);
+
+			if (c==EOF)
+			{
+				return NULL;
+			}
+			g_string_append(g_word,word);
+
+			return g_string_ascii_down(g_word)->str;
+	 */
+			char c,*word=g_malloc(100);
+			c = fscanf(ifile,"%*[^A-Za-z]",word);
+			c = fscanf(ifile,"%[A-Za-z]",word);
+			if(c==EOF)return NULL;
+			return word;
+			
+ }
+ void addkey(char* word,int* index){
+	if(!g_slist_find_custom (list,word,(GCompareFunc)g_strcmp0)){
+//	if(!g_slist_find(list,word)){	
+	list = g_slist_insert_sorted(list,word,(GCompareFunc)g_strcmp0);
+//	list = g_slist_prepend(list,word);
+	GSList* indexlist = NULL;
+	indexlist = g_slist_append(indexlist,index);
+	g_hash_table_insert (hash,word,indexlist);
+			
+	}else{
+
+	GSList* indexlist=g_hash_table_lookup(hash,word);
+//
+	int *value=(g_slist_last(indexlist))->data;
+	if(*value!=*index){
+	indexlist= g_slist_append(indexlist,index);
+
+		}
+	}
+ }
