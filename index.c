@@ -39,25 +39,20 @@ int main (int c, char *v[]) {
 		int*index=g_malloc(sizeof(int));
 		sprintf(f_path,"%s/%s",v[1],pDirent->d_name);
 		ifile = fopen(f_path,"r");
-		sscanf(f_path,"%*[^0123456789]%d",index);
-//		printf("file%d\n",*index );
+		sscanf(f_path,"%*[^0-9]%d",index);
+		printf("file%d\n",*index );
 
 
 		while(1){
-//get word
-			/*
-			char * word = g_malloc(sizeof(char)*512);
-			c = fscanf(ifile,"%*[^A-Za-z]");
-			c = fscanf(ifile,"%[A-Za-z]",word);
-			word = realloc(word,sizeof(char)*(strlen(word)+1));
-			
-//---------*/
+
 
 			char *word = getword();
 			if(word==NULL)break;
 
-//			addkey(word,index);
-//			printf("%s\n",word );
+
+
+			addkey(word,index);
+
 		}
 
 		fclose(ifile);
@@ -95,46 +90,25 @@ int compare_int (int *a, int *b){
   
 }
  char* getword(){
-/*
+
  	char c;
  	GString* g_word= g_string_new(NULL);
  	c=fgetc(ifile);
 
 
 
-	while((!isalpha(c))){
+	while(c<'A'||(c>'Z'&&c<'a')||c>'z'){
 	 	if(c==-1)return NULL;
 	 	c=fgetc(ifile);
 	}
 
- 	while(isalpha(c)){
+ 	while(!(c<'A'||c>'z'||(c>'Z'&&c<'a'))){
  		g_string_append_c(g_word,tolower(c));
  		 c=fgetc(ifile);
 	}
 
   	return g_word->str;
-*/	
-  	
-  	 /*			GString* g_word = g_string_new(NULL);
 
-  			char c, word[100];
-			c = fscanf(ifile,"%*[^A-Za-z]");
-			c = fscanf(ifile,"%[A-Za-z]",word);
-
-			if (c==EOF)
-			{
-				return NULL;
-			}
-			g_string_append(g_word,word);
-
-			return g_string_ascii_down(g_word)->str;
-	 */
-			char c,*word=g_malloc(100);
-			c = fscanf(ifile,"%*[^A-Za-z]",word);
-			c = fscanf(ifile,"%[A-Za-z]",word);
-			if(c==EOF)return NULL;
-			return word;
-			
  }
  void addkey(char* word,int* index){
 	if(!g_slist_find_custom (list,word,(GCompareFunc)g_strcmp0)){
@@ -147,12 +121,13 @@ int compare_int (int *a, int *b){
 			
 	}else{
 
-	GSList* indexlist=g_hash_table_lookup(hash,word);
-//
-	int *value=(g_slist_last(indexlist))->data;
-	if(*value!=*index){
-	indexlist= g_slist_append(indexlist,index);
-
+		GSList* indexlist=g_hash_table_lookup(hash,word);
+		free(word);
+		int *value=(g_slist_last(indexlist))->data;
+		if(*value!=*index){
+			indexlist= g_slist_append(indexlist,index);
+		}else{
+		//	free(index);
 		}
 	}
  }
