@@ -40,7 +40,7 @@ int main (int c, char *v[]) {
 		sprintf(f_path,"%s/%s",v[1],pDirent->d_name);
 		ifile = fopen(f_path,"r");
 		sscanf(f_path,"%*[^0-9]%d",index);
-		printf("file%d\n",*index );
+//		printf("file%d\n",*index );
 
 
 		while(1){
@@ -61,7 +61,7 @@ int main (int c, char *v[]) {
 	closedir (pDir);
 	ofile=fopen("output","w");
 	list=g_slist_sort(list,(GCompareFunc)strcmp);
-//	fprintf(ofile, "%d\n",g_slist_length(list));
+	fprintf(ofile, "%d\n",g_slist_length(list));
 	g_slist_foreach(list,(GFunc)looklist,NULL);
 	fclose(ofile);
 	return 0;
@@ -111,21 +111,25 @@ int compare_int (int *a, int *b){
 
  }
  void addkey(char* word,int* index){
-	if(!g_slist_find_custom (list,word,(GCompareFunc)g_strcmp0)){
+ 	GSList* indexlist=g_hash_table_lookup(hash,word);
+	if(!indexlist){
 //	if(!g_slist_find(list,word)){	
-	list = g_slist_insert_sorted(list,word,(GCompareFunc)g_strcmp0);
-//	list = g_slist_prepend(list,word);
+//	list = g_slist_insert_sorted(list,word,(GCompareFunc)g_strcmp0);
+	list = g_slist_prepend(list,word);
 	GSList* indexlist = NULL;
-	indexlist = g_slist_append(indexlist,index);
+	indexlist = g_slist_prepend(indexlist,index);
 	g_hash_table_insert (hash,word,indexlist);
 			
 	}else{
 
-		GSList* indexlist=g_hash_table_lookup(hash,word);
-		free(word);
-		int *value=(g_slist_last(indexlist))->data;
+		
+		
+		int *value=indexlist->data;
+//		printf("(%d %d)",*value ,*index );
 		if(*value!=*index){
-			indexlist= g_slist_append(indexlist,index);
+//printf(" add \n");
+			indexlist= g_slist_prepend(indexlist,index);
+			g_hash_table_replace (hash,word,indexlist);
 		}else{
 		//	free(index);
 		}
