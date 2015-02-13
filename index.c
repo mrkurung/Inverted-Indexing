@@ -3,23 +3,39 @@
 #include <stdlib.h>
 #include <glib.h>
 #include <string.h>
+#include <pthread.h>
+#define NUM_THREADS	4
 
 GSList *list = NULL;
 GHashTable *hash;
 FILE *ifile,*ofile;
-//char buffer[];
+char * word[NUM_THREADS];
+
 char f_path[24] ;
 void looklist(char* word);
-void addkey(char* word,int* index);
+void* addkey(void *threadarg);
 void printindex(GSList *index);
 int compare_int (int *a, int *b);
-char* getword();
+void* getword();
+struct thread_data{
+	int thread;
+	int  *index;
+	char *word;
+};
+
+struct thread_data thread_data_array[NUM_THREADS];
 
 int main (int c, char *v[]) {
 	int len;
 	struct dirent *pDirent;
 	DIR *pDir;
 	hash= g_hash_table_new ( g_str_hash,g_str_equal);
+	pthread_t thread[NUM_THREADS];
+	pthread_attr_t attr;
+
+	int rc;
+	long t;
+	void *status;
 
 	if (c < 2) {
 		printf ("Usage: testprog <dirname>\n");
@@ -33,8 +49,8 @@ int main (int c, char *v[]) {
 	}
 	
 	GSList* indexlist = NULL;
+	
 	while ((pDirent = readdir(pDir)) != NULL) {
-
 
 		int*index=g_malloc(sizeof(int));
 		sprintf(f_path,"%s/%s",v[1],pDirent->d_name);
@@ -44,14 +60,30 @@ int main (int c, char *v[]) {
 
 
 		while(1){
+			for(t=0; t<NUM_THREADS; t++) {
+				pthread_create(&thread[t], NULL, getword, NULL); 
 
 
-			char *word = getword();
-			if(word==NULL)break;
+				word[t] = status;
+				if(word[t]==NULL)break;
+				printf("%s\n",word[t]);
+			}
 
 
+			for(t=0; t<NUM_THREADS; t++) {
+				//printf("Main: creating thread %ld\n", t);
 
-			addkey(word,index);
+				   thread_data_array[t].word = word[t];
+				   thread_data_array[t].index = index;
+				   thread_data_array[t].thread = t;
+				rc = pthread_create(&thread[t], NULL, addkey, (void *) &thread_data_array[t]); 
+				if (rc) {
+					printf("ERROR; return code from pthread_create() is %d\n", rc);
+					exit(-1);
+			    }
+	      	}
+
+			//addkey(word,index);
 
 		}
 
@@ -64,7 +96,7 @@ int main (int c, char *v[]) {
 	fprintf(ofile, "%d\n",g_slist_length(list));
 	g_slist_foreach(list,(GFunc)looklist,NULL);
 	fclose(ofile);
-	return 0;
+	pthread_exit(NULL);
 }
 
 void looklist(char* word){
@@ -89,7 +121,7 @@ int compare_int (int *a, int *b){
 	return (*a-*b);
   
 }
- char* getword(){
+void* getword(){
 
  	char c;
  	GString* g_word= g_string_new(NULL);
@@ -107,10 +139,19 @@ int compare_int (int *a, int *b){
  		 c=fgetc(ifile);
 	}
 
-  	return g_word->str;
+  	return  (void*)g_word->str;
 
  }
- void addkey(char* word,int* index){
+ void *addkey(void *threadarg){
+
+   char *word;
+   int*index;
+   struct thread_data *my_data;
+
+ 	my_data = (struct thread_data *) threadarg;
+ 	word=my_data->word;
+ 	index=my_data->index;
+
  	GSList* indexlist=g_hash_table_lookup(hash,word);
 	if(!indexlist){
 //	if(!g_slist_find(list,word)){	
@@ -126,12 +167,11 @@ int compare_int (int *a, int *b){
 		
 		int *value=indexlist->data;
 //		printf("(%d %d)",*value ,*index );
-		if(*value!=*index){
+		if(*value!=*(index)){
 //printf(" add \n");
 			indexlist= g_slist_prepend(indexlist,index);
 			g_hash_table_replace (hash,word,indexlist);
-		}else{
-		//	free(index);
 		}
-	}
+	} //printf("thread %d word %s  index %d\n",my_data->thread,word, *index);
+	   pthread_exit(NULL);
  }
