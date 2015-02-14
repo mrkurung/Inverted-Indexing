@@ -10,10 +10,10 @@ FILE *ifile,*ofile;
 //char buffer[];
 char f_path[24] ;
 void looklist(char* word);
-void addkey(char* word,int* index);
+void addkey(GString* g_word,int* index);
 void printindex(GSList *index);
 int compare_int (int *a, int *b);
-char* getword();
+GString* getword();
 
 int main (int c, char *v[]) {
 	int len;
@@ -46,12 +46,12 @@ int main (int c, char *v[]) {
 		while(1){
 
 
-			char *word = getword();
-			if(word==NULL)break;
+			GString *g_word = getword();
+			if(g_word==NULL)break;
 
 
-
-			addkey(word,index);
+		//	printf("%s\n",g_word->str );
+			addkey(g_word,index);
 
 		}
 
@@ -68,28 +68,30 @@ int main (int c, char *v[]) {
 }
 
 void looklist(char* word){
+//	printf("%s\n",word );
 
 	GSList *indexlist=g_hash_table_lookup(hash,word);
 	indexlist = g_slist_sort(indexlist,(GCompareFunc)compare_int);
-	int *arraylist=indexlist->data;
+	int *index=indexlist->data;
 
-	fprintf(ofile,"%s:%d:%d",word,g_slist_length(indexlist),*arraylist);
+	fprintf(ofile,"%s:%d:%d",word,g_slist_length(indexlist),*index);
 	indexlist=indexlist->next;
 	while( indexlist!=NULL){
-		arraylist=indexlist->data;
-		fprintf(ofile,",%d",*arraylist);
+		index=indexlist->data;
+		fprintf(ofile,",%d",*index);
 		indexlist=indexlist->next;
 
 	}
 	fprintf(ofile,"\n");
-	//fprintf(ofile,"%s\n",word );
+	g_slist_free(indexlist);
+	//fprintf(ofile,"%s\n",word );*/
 }
 
 int compare_int (int *a, int *b){
 	return (*a-*b);
   
 }
- char* getword(){
+ GString* getword(){
 
  	char c;
  	GString* g_word= g_string_new(NULL);
@@ -107,19 +109,21 @@ int compare_int (int *a, int *b){
  		 c=fgetc(ifile);
 	}
 
-  	return g_word->str;
+  	return g_word;
 
  }
- void addkey(char* word,int* index){
- 	GSList* indexlist=g_hash_table_lookup(hash,word);
+ void addkey(GString* g_word,int* index){
+
+ 	GSList* indexlist=g_hash_table_lookup(hash,g_word->str);
 	if(!indexlist){
+	char* word = g_string_free(g_word,FALSE);
 //	if(!g_slist_find(list,word)){	
 //	list = g_slist_insert_sorted(list,word,(GCompareFunc)g_strcmp0);
 	list = g_slist_prepend(list,word);
 	GSList* indexlist = NULL;
 	indexlist = g_slist_prepend(indexlist,index);
 	g_hash_table_insert (hash,word,indexlist);
-			
+//	g_string_free(g_word,FALSE);
 	}else{
 
 		
@@ -129,9 +133,11 @@ int compare_int (int *a, int *b){
 		if(*value!=*index){
 //printf(" add \n");
 			indexlist= g_slist_prepend(indexlist,index);
-			g_hash_table_replace (hash,word,indexlist);
+			g_hash_table_replace (hash,g_word->str,indexlist);
+			g_string_free(g_word,FALSE);
 		}else{
-		//	free(index);
+		g_string_free(g_word,TRUE);
 		}
+		
 	}
  }
