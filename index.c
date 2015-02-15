@@ -8,7 +8,7 @@ GSList *list = NULL;
 GHashTable *hash;
 FILE *ifile,*ofile;
 //char buffer[];
-char f_path[24] ;
+char f_path[30] ;
 void looklist(char* word);
 void addkey(GString* g_word,int* index);
 void printindex(GSList *index);
@@ -16,7 +16,7 @@ int compare_int (int *a, int *b);
 GString* getword();
 
 int main (int c, char *v[]) {
-	int len;
+//	int len;
 	struct dirent *pDirent;
 	DIR *pDir;
 	hash= g_hash_table_new ( g_str_hash,g_str_equal);
@@ -36,10 +36,10 @@ int main (int c, char *v[]) {
 	while ((pDirent = readdir(pDir)) != NULL) {
 
 
-		int*index=g_malloc(sizeof(int));
+		int*index=g_malloc(sizeof(int*));
 		sprintf(f_path,"%s/%s",v[1],pDirent->d_name);
 		ifile = fopen(f_path,"r");
-		sscanf(f_path,"%*[^0-9]%d",index);
+		sscanf(pDirent->d_name,"%*[^0-9]%d",index);
 //		printf("file%d\n",*index );
 
 
